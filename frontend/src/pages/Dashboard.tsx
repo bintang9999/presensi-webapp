@@ -658,7 +658,7 @@ const Dashboard = () => {
 
             <div className="relative z-10 md:w-2/3">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white flex flex-wrap items-center gap-2 mb-4">
-                {greeting}{firstName ? `, ${firstName}` : ''} <Hand className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                {greeting}{firstName ? `, ${firstName}` : ''}
               </h2>
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <span>{totalClassesToday} Kelas Hari Ini</span>

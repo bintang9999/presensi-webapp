@@ -51,7 +51,7 @@ const Login = () => {
           className="glass-dark w-full max-w-md p-8 md:p-10 rounded-3xl z-10"
         >
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Selamat Datang 👋</h2>
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Selamat Datang</h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Masuk dengan Akun Raising</p>
           </div>
 
@@ -69,7 +69,7 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2 group">
               <label className="text-xs font-semibold tracking-wider text-slate-500 dark:text-slate-400 uppercase ml-1 transition-colors group-focus-within:text-emerald-500 dark:group-focus-within:text-emerald-400">
-                NIM Mahasiswa
+                NIM
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-emerald-500 dark:group-focus-within:text-emerald-400 text-slate-400 dark:text-slate-500">
@@ -113,7 +113,7 @@ const Login = () => {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Bentar Bang....</span>
+                  <span>Bentar....</span>
                 </div>
               ) : (
                 'Masuk'
