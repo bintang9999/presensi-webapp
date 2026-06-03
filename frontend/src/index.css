@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+  .glass-dark {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+  }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 min-h-screen antialiased;
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.15) 0%, transparent 40%);
+}
