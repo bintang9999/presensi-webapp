@@ -4,12 +4,23 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer utilities {
   .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+    @apply bg-white/70 backdrop-blur-lg border border-slate-200/50 shadow-xl dark:bg-white/10 dark:border-white/20;
   }
   .glass-dark {
-    @apply bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+    @apply bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-xl dark:bg-slate-900/40 dark:border-slate-700/50 dark:shadow-2xl;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -20,9 +31,15 @@
 }
 
 body {
-  @apply bg-slate-950 text-slate-100 min-h-screen antialiased;
+  @apply bg-slate-50 text-slate-900 min-h-screen antialiased transition-colors duration-300;
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
+  background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+}
+
+html.dark body {
+  @apply bg-slate-950 text-slate-100;
   background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
                     radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.15) 0%, transparent 40%);
 }

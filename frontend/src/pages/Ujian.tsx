@@ -55,38 +55,37 @@ const Ujian = () => {
       <motion.header 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="glass-dark rounded-3xl p-6 md:px-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between border border-white/5 gap-4"
+        className="glass-dark rounded-3xl p-6 md:px-8 mb-8 flex flex-row items-center justify-between border border-slate-200 dark:border-white/5 gap-4"
       >
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <CalendarDays className="text-white w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">Jadwal Ujian</h1>
-            <p className="text-sm text-slate-400">Pantau jadwal ujian akademik Anda</p>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Jadwal Ujian</h1>
           </div>
         </div>
         
         <button 
           onClick={fetchData} 
           disabled={loading}
-          className="p-2.5 bg-slate-800/80 rounded-xl hover:bg-slate-700 transition-all hover:scale-110 active:scale-95 disabled:opacity-50 border border-slate-700/50"
+          className="p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all hover:scale-110 active:scale-95 disabled:opacity-50 border border-slate-300 dark:border-slate-700/50"
         >
-          <RefreshCw className={`w-5 h-5 text-slate-300 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
+          <RefreshCw className={`w-5 h-5 text-slate-500 dark:text-slate-300 ${loading ? 'animate-spin text-indigo-500 dark:text-indigo-400' : ''}`} />
         </button>
       </motion.header>
 
       {loading ? (
-        <div className="glass-dark rounded-3xl p-16 flex flex-col items-center justify-center space-y-4 border border-white/5">
-          <div className="w-12 h-12 rounded-full border-4 border-slate-700 border-t-indigo-500 animate-spin" />
-          <p className="text-slate-400 font-medium">Memuat jadwal ujian...</p>
+        <div className="glass-dark rounded-3xl p-16 flex flex-col items-center justify-center space-y-4 border border-slate-200 dark:border-white/5">
+          <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500 animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Memuat jadwal ujian...</p>
         </div>
       ) : jadwal.length === 0 ? (
-        <div className="glass-dark rounded-3xl p-16 text-center border border-white/5">
-          <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="glass-dark rounded-3xl p-16 text-center border border-slate-200 dark:border-white/5">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-300 mb-1">Tidak ada ujian</h3>
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">Tidak ada ujian</h3>
           <p className="text-slate-500 text-sm">Anda tidak memiliki jadwal ujian dalam waktu dekat.</p>
         </div>
       ) : (
@@ -101,31 +100,31 @@ const Ujian = () => {
                 className="glass-dark rounded-3xl p-6 border-t-4 border-t-indigo-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold tracking-wider px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-md uppercase border border-indigo-500/20">
+                  <span className="text-[10px] font-bold tracking-wider px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-md uppercase border border-indigo-200 dark:border-indigo-500/20">
                     {item.status || "TERJADWAL"}
                   </span>
                   {item.no_kursi && (
-                    <span className="text-xs font-semibold text-slate-400">
-                      Kursi: <span className="text-white">{item.no_kursi}</span>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Kursi: <span className="text-slate-700 dark:text-white">{item.no_kursi}</span>
                     </span>
                   )}
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-4 line-clamp-2 min-h-[56px]">{item.nama_matakuliah}</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 min-h-[56px]">{item.nama_matakuliah}</h3>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-sm text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                    <CalendarDays className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                    <CalendarDays className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                     <span>{item.tanggal ? format(new Date(item.tanggal), 'EEEE, dd MMM yyyy', { locale: id }) : '-'}</span>
                   </div>
                   
-                  <div className="flex items-center gap-3 text-sm text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                    <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                    <Clock className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>{item.jam_awal} - {item.jam_akhir}</span>
                   </div>
                   
                   {item.ruang && (
-                    <div className="flex items-center gap-3 text-sm text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                    <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
                       <span className="shrink-0 text-base">📍</span>
                       <span>{item.ruang}</span>
                     </div>
@@ -133,9 +132,9 @@ const Ujian = () => {
                 </div>
 
                 {item.nama_pengawas && (
-                  <div className="mt-4 pt-4 border-t border-slate-800">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-1">Pengawas</p>
-                    <p className="text-sm font-medium text-slate-300">{item.nama_pengawas}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold mb-1">Pengawas</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.nama_pengawas}</p>
                   </div>
                 )}
               </motion.div>

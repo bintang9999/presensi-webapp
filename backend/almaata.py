@@ -37,14 +37,25 @@ class AlmaAtaService:
     def namespace(self, value):
         NAMESPACES[self.npm] = value
 
-    def sync_session_and_namespace(self):
+    def sync_session_and_namespace(self, force_login=False):
         url_form = f"{BASE_URL}/welcome"
         url_post = f"{BASE_URL}/auth/login"
+
+        if force_login:
+            self.session.cookies.clear()
+            self.namespace = None
 
         try:
             r_get = self.session.get(url_form, headers=HEADERS, timeout=30)
             if r_get.status_code != 200:
                 return False
+
+            # Cek apakah sudah terautentikasi (hindari POST ulang jika sudah login)
+            if "logout" in r_get.text.lower():
+                match = re.search(r'almaata\.ac\.id/([a-f0-9]{32,40})/', r_get.url)
+                if match:
+                    self.namespace = match.group(1)
+                    return True
 
             soup = BeautifulSoup(r_get.text, "html.parser")
             
@@ -52,6 +63,9 @@ class AlmaAtaService:
             if csrf_input is None:
                 token = self.session.cookies.get("csrf_cookie_name")
                 if not token:
+                    # Jika tidak ada token CSRF, coba paksa refresh jika belum
+                    if not force_login:
+                        return self.sync_session_and_namespace(force_login=True)
                     return False
             else:
                 token = csrf_input.get("value")
@@ -75,6 +89,11 @@ class AlmaAtaService:
                 if match:
                     self.namespace = match.group(1)
                     return True
+            
+            # Jika gagal dan ini bukan force_login, coba lagi dengan session bersih
+            if not force_login:
+                return self.sync_session_and_namespace(force_login=True)
+                
             return False
         except Exception as e:
             print(f"Error Login Auth: {e}")
@@ -244,4 +263,62 @@ class AlmaAtaService:
         except Exception as e:
             print(f"Error fetching tagihan: {e}")
             return []
+
+    def get_kehadiran(self, tahun: str = "2025", semester: str = "2"):
+        if not self.namespace:
+            if not self.sync_session_and_namespace():
+                return {}
+                
+        if not self.id_mahasiswa:
+            self.extract_id_mahasiswa()
+            if not self.id_mahasiswa:
+                return {}
+
+        api_url = f"{BASE_URL}/{self.namespace}/api/cetak/get_kehadiran_mahasiswa_data/{self.id_mahasiswa}?filter_tahun_akademik={tahun}&filter_semester_akademik={semester}"
+        try:
+            r = self.session.get(api_url, headers=HEADERS, timeout=30)
+            if r.status_code != 200 or "json" not in r.headers.get("Content-Type", ""):
+                if self.sync_session_and_namespace():
+                    r = self.session.get(api_url, headers=HEADERS, timeout=30)
+                else:
+                    return {}
+            
+            # Count the attendance data
+            data = r.json()
+            
+            with open("/tmp/kehadiran.json", "w") as f:
+                import json
+                json.dump(data, f)
+                
+            # Usually the Alma Ata API returns {"data": [...]} where each item is a course
+            records = data.get("data", [])
+            
+            summary = {
+                "Hadir": 0,
+                "Izin": 0,
+                "Sakit": 0,
+                "Alpha": 0
+            }
+            details = []
+            
+            for course in records:
+                summary["Hadir"] += course.get("total_hadir", 0)
+                # Because the API doesn't distinguish Izin/Sakit in this summary endpoint,
+                # we map all 'tidak hadir' to Alpha for now
+                summary["Alpha"] += course.get("total_tidak_hadir", 0)
+                
+                details.append({
+                    "nama_matakuliah": course.get("nama_matakuliah", "Tidak Diketahui"),
+                    "total_hadir": course.get("total_hadir", 0),
+                    "total_tidak_hadir": course.get("total_tidak_hadir", 0),
+                    "presentase_kehadiran": course.get("presentase_kehadiran", 0)
+                })
+            
+            return {
+                "summary": summary,
+                "details": details
+            }
+        except Exception as e:
+            print(f"Error fetching kehadiran: {e}")
+            return {}
 

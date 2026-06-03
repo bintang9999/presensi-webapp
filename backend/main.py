@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from models import AttendanceLog, AbsenState, User, MatkulAutoPref
 from schemas import Token, AttendanceLogResponse, ScheduleItem, ToggleMatkulRequest
 from auth import create_access_token, get_current_user
 from almaata import AlmaAtaService, get_md5
-from scheduler import start_scheduler
+from scheduler import start_scheduler, check_user_attendance
 
 # Buat tabel database
 Base.metadata.create_all(bind=engine)
@@ -42,8 +42,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     
     almaata_service = AlmaAtaService(npm=npm, f1=f1, f2=f2)
     
-    # Coba login ke Alma Ata
-    if not almaata_service.sync_session_and_namespace():
+    # Coba login ke Alma Ata dengan paksa hapus cookies lama (fresh login)
+    if not almaata_service.sync_session_and_namespace(force_login=True):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Login ke Alma Ata gagal. Periksa NIM dan Password.",
@@ -184,9 +184,14 @@ async def get_status(current_user: User = Depends(get_current_user), db: Session
     }
 
 @app.post("/api/toggle-auto")
-async def toggle_auto(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def toggle_auto(background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     current_user.is_active = not current_user.is_active
     db.commit()
+    
+    # Trigger instant check if activated
+    if current_user.is_active:
+        background_tasks.add_task(check_user_attendance, current_user.npm, None)
+        
     return {"is_active": current_user.is_active}
 
 @app.get("/api/ujian")
@@ -209,6 +214,22 @@ async def get_tagihan(semester: str, current_user: User = Depends(get_current_us
         id_mahasiswa=current_user.id_mahasiswa
     )
     data = almaata_service.get_tagihan(semester)
+    return data
+
+@app.get("/api/kehadiran")
+async def get_kehadiran(
+    tahun: str = "2025", 
+    semester: str = "2", 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    almaata_service = AlmaAtaService(
+        npm=current_user.npm, 
+        f1=current_user.f1, 
+        f2=current_user.f2, 
+        id_mahasiswa=current_user.id_mahasiswa
+    )
+    data = almaata_service.get_kehadiran(tahun=tahun, semester=semester)
     return data
 
 if __name__ == "__main__":
