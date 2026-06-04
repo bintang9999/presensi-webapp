@@ -1,10 +1,32 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, Hand, PartyPopper, MapPin, Rocket } from 'lucide-react';
+import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, PartyPopper, MapPin, Rocket } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import toast from 'react-hot-toast';
 import api from '../api';
 import { useNotifications } from '../contexts/NotificationContext';
+
+const SkeletonCard = () => (
+  <div className="w-full bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm animate-pulse">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700/50"></div>
+      <div className="h-5 w-48 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+    </div>
+    <div className="space-y-4">
+      {[1, 2].map(i => (
+        <div key={i} className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+            <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+          </div>
+          <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+          <div className="h-8 w-full bg-slate-200 dark:bg-slate-700/50 rounded mt-2"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 interface ScheduleItem {
   id_pertemuan_presensi: string;
@@ -392,6 +414,7 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
   let isOngoing = false;
   let statusText: React.ReactNode = '';
   let headerText = 'KELAS BERIKUTNYA';
+  let progressPercentage = 0;
 
   if (nextClass.jam_mulai && nextClass.jam_selesai) {
     const [startH, startM] = nextClass.jam_mulai.split(':');
@@ -409,15 +432,15 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
       isOngoing = true;
       headerText = 'SEDANG BERLANGSUNG';
       
+      const totalDurationMs = endTime.getTime() - startTime.getTime();
+      const elapsedMs = now.getTime() - startTime.getTime();
+      progressPercentage = Math.round((elapsedMs / totalDurationMs) * 100);
+      progressPercentage = Math.min(100, Math.max(0, progressPercentage));
+
       const diffHours = Math.floor(diffEndMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffEndMs % (1000 * 60 * 60)) / (1000 * 60));
       
-      statusText = (
-        <span className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Berakhir dalam {diffHours > 0 ? diffHours + ' jam ' : ''}{diffMinutes} menit
-        </span>
-      );
+      statusText = `Sisa ${diffHours > 0 ? diffHours + 'j ' : ''}${diffMinutes}m`;
     } else if (diffStartMs > 0) {
       const diffHours = Math.floor(diffStartMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffStartMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -427,20 +450,38 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
   }
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
-      <div className="flex items-center gap-4 flex-1">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center border shrink-0 ${isOngoing ? 'bg-emerald-50 border-emerald-100 text-emerald-500' : 'bg-blue-50 border-blue-100 text-blue-500'}`}>
-          <Clock className="w-5 h-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 overflow-hidden">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">{headerText}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md truncate ${isOngoing ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-              {statusText}
-            </span>
+    <div className="w-full bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-3 sm:gap-4">
+      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${isOngoing ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'}`}>
+        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isOngoing ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+          {headerText}
+        </span>
+        <h3 className="text-slate-800 dark:text-white font-bold text-[13px] sm:text-lg leading-snug mb-0.5 sm:mb-1 truncate">{nextClass.nama_matakuliah}</h3>
+        
+        {isOngoing ? (
+          <div className="flex flex-col gap-1.5 sm:gap-2 w-full mt-0.5 sm:mt-1">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex-1 h-1.5 sm:h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <span className="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300">{progressPercentage}%</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="text-[10px] sm:text-xs font-medium">{statusText}</span>
+            </div>
           </div>
-          <h3 className="text-slate-800 dark:text-white font-bold line-clamp-2 text-sm leading-snug">{nextClass.nama_matakuliah}</h3>
-        </div>
+        ) : (
+          <div className="flex items-center gap-1 sm:gap-1.5 text-blue-600 dark:text-blue-400 mt-0.5 sm:mt-1">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[10px] sm:text-xs font-medium">{statusText}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -457,15 +498,100 @@ const Dashboard = () => {
   const [showRocket, setShowRocket] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [lastUpdated, setLastUpdated] = useState<string>('--:--');
+  
+  type PresensiStatus = 'unknown' | 'active' | 'unavailable/manual' | 'offline';
+  const lastHealthStatusRef = useRef<PresensiStatus>(
+    (sessionStorage.getItem('last_bot_status') as PresensiStatus) || 'unknown'
+  );
+
+  // Pull to refresh states
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      setTouchStart(e.targetTouches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (window.scrollY === 0 && touchStart > 0) {
+      setTouchEnd(e.targetTouches[0].clientY);
+      if (e.targetTouches[0].clientY - touchStart > 50) {
+        setIsPulling(true);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isPulling && touchEnd - touchStart > 80) {
+      if (navigator.vibrate) navigator.vibrate([20]);
+      fetchData();
+    }
+    setIsPulling(false);
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [scheduleRes, statusRes, ujianRes] = await Promise.all([
+      const [scheduleRes, statusRes, ujianRes, healthRes] = await Promise.all([
         api.get('/schedule'),
         api.get('/status'),
-        api.get('/ujian').catch(() => ({ data: [] }))
+        api.get('/ujian').catch(() => ({ data: [] })),
+        api.get('/health').catch(() => ({ data: { status: 'error' } }))
       ]);
+      
+      const healthStatus = healthRes.data?.status;
+      const isAutoPresensi = statusRes.data?.is_active;
+      
+      let currentHealthState: PresensiStatus = 'offline';
+      if (healthStatus === 'ok') {
+        currentHealthState = isAutoPresensi ? 'active' : 'unavailable/manual';
+      }
+
+      if (currentHealthState !== lastHealthStatusRef.current) {
+        const prev = lastHealthStatusRef.current;
+        
+        if (currentHealthState === 'active') {
+          if (prev === 'offline') {
+            toast.success(
+              <div>
+                <b className="block">Auto Presensi Aktif</b>
+                <span className="text-xs">Sistem kembali online. Presensi otomatis siap digunakan.</span>
+              </div>, { duration: 4000 }
+            );
+          } else {
+            toast.success(
+              <div>
+                <b className="block">Auto Presensi Aktif</b>
+                <span className="text-xs">Presensi akan dilakukan otomatis saat kode tersedia.</span>
+              </div>, { duration: 4000 }
+            );
+          }
+        } else if (currentHealthState === 'unavailable/manual') {
+          if (prev === 'active') {
+            toast(
+              <div>
+                <b className="block">Auto Presensi Tidak Tersedia</b>
+                <span className="text-xs">Silakan gunakan presensi manual untuk sementara.</span>
+              </div>, { icon: '⚠️', duration: 5000 }
+            );
+          }
+        } else if (currentHealthState === 'offline') {
+          toast.error(
+            <div>
+              <b className="block">Auto Presensi Offline</b>
+              <span className="text-xs">Silakan gunakan presensi manual sampai sistem kembali normal.</span>
+            </div>, { duration: 5000 }
+          );
+        }
+        
+        lastHealthStatusRef.current = currentHealthState;
+        sessionStorage.setItem('last_bot_status', currentHealthState);
+      }
       
       const newSchedules = scheduleRes.data as ScheduleItem[];
       
@@ -493,6 +619,16 @@ const Dashboard = () => {
               message: `Presensi untuk mata kuliah ${newSch.nama_matakuliah} telah dibuka.`,
               type: 'open'
             });
+          }
+          // Jika tadinya belum absen, lalu jadi sudah absen secara otomatis (bukan karena klik tombol manual saat loading)
+          if (oldSch && oldSch.status_presensi === "0" && newSch.status_presensi !== "0" && actionLoading !== newSch.id_pertemuan_presensi) {
+            toast.success(
+              <div>
+                <b className="block">Presensi Berhasil</b>
+                <span className="text-xs">Kode berhasil dikirim ke sistem untuk {newSch.nama_matakuliah}.</span>
+              </div>,
+              { duration: 5000 }
+            );
           }
         });
       }
@@ -581,12 +717,16 @@ const Dashboard = () => {
 
   const handleManualAttendance = async (id: string, kode: string, matkul: string) => {
     if (!kode || kode === '-') {
-      alert('Kode presensi belum tersedia dari dosen (masih ---). Silakan refresh nanti jika sudah dibuka!');
+      toast.error('Kode presensi belum tersedia dari dosen. Silakan refresh nanti!');
       return;
     }
+    if (navigator.vibrate) navigator.vibrate([20]);
     setActionLoading(id);
     try {
       await api.post(`/attendance/${id}?kode=${kode}&matkul=${encodeURIComponent(matkul)}`);
+      
+      if (navigator.vibrate) navigator.vibrate([20, 100, 20]);
+      toast.success('Presensi berhasil dikirim!');
       
       // Trigger rocket animation on success
       setShowRocket(true);
@@ -595,7 +735,8 @@ const Dashboard = () => {
       // Refresh data
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Gagal mengirim presensi.');
+      if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+      toast.error(err.response?.data?.detail || 'Gagal mengirim presensi.');
     } finally {
       setActionLoading(null);
     }
@@ -604,9 +745,33 @@ const Dashboard = () => {
   const handleToggleAuto = async () => {
     try {
       const res = await api.post('/toggle-auto');
-      setIsAutoActive(res.data.is_active);
+      const newActiveStatus = res.data.is_active;
+      setIsAutoActive(newActiveStatus);
+      if (navigator.vibrate) navigator.vibrate([20]);
+      
+      if (newActiveStatus) {
+         toast.success(
+            <div>
+              <b className="block">Auto Presensi Aktif</b>
+              <span className="text-xs">Presensi akan dilakukan otomatis saat kode tersedia.</span>
+            </div>,
+            { duration: 4000 }
+          );
+      } else {
+         toast(
+            <div>
+              <b className="block">Mode Manual Aktif</b>
+              <span className="text-xs">Presensi otomatis dimatikan. Silakan presensi manual.</span>
+            </div>,
+            { icon: 'ℹ️', duration: 4000 }
+          );
+      }
+      
+      const newState = newActiveStatus ? 'active' : 'unavailable/manual';
+      lastHealthStatusRef.current = newState;
+      sessionStorage.setItem('last_bot_status', newState);
     } catch (err) {
-      alert('Gagal mengubah status auto-monitoring');
+      toast.error('Gagal mengubah status auto-monitoring');
     }
   };
 
@@ -638,8 +803,14 @@ const Dashboard = () => {
   const firstName = userName ? userName.split(' ')[0] : '';
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-transparent">
+    <div 
+      className="min-h-screen p-4 md:p-8 bg-transparent"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="max-w-4xl mx-auto space-y-6">
+
           
         {/* Compact Welcome Banner & Next Class */}
         <div className="flex flex-col gap-4">
@@ -660,6 +831,7 @@ const Dashboard = () => {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white flex flex-wrap items-center gap-2 mb-4">
                 {greeting}{firstName ? `, ${firstName}` : ''}
               </h2>
+              
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <span>{totalClassesToday} Kelas Hari Ini</span>
                 <span>•</span>
@@ -681,8 +853,18 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-
-          <NextClassCard schedules={schedules} todayStr={todayStr} />
+          {loading && schedules.length === 0 && jadwalUjian.length === 0 ? (
+            <div className="w-full bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-3 sm:gap-4 animate-pulse">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700/50 shrink-0"></div>
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+                <div className="h-5 w-48 sm:w-64 bg-slate-200 dark:bg-slate-700/50 rounded"></div>
+                <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700/50 rounded mt-2"></div>
+              </div>
+            </div>
+          ) : (
+            <NextClassCard schedules={schedules} todayStr={todayStr} />
+          )}
         </div>
 
         {/* Schedule Section */}
@@ -715,9 +897,10 @@ const Dashboard = () => {
           </div>
 
             {loading && schedules.length === 0 && jadwalUjian.length === 0 ? (
-              <div className="glass-dark rounded-3xl p-16 flex flex-col items-center justify-center space-y-4 border border-slate-200 dark:border-white/5">
-                <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-emerald-500 animate-spin" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">Memuat jadwal terbaru...</p>
+              <div className="space-y-5">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
               </div>
             ) : schedules.length > 0 ? (
               <div className="space-y-5">

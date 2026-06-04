@@ -232,5 +232,13 @@ async def get_kehadiran(
     data = almaata_service.get_kehadiran(tahun=tahun, semester=semester)
     return data
 
+@app.get("/api/health")
+async def health_check():
+    # Since this just needs to indicate backend is running and auto presensi is ready
+    return {
+        "status": "ok",
+        "auto_presensi": True
+    }
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

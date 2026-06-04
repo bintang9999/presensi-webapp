@@ -23,6 +23,13 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
+  // Request Notification Permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('notifications');
@@ -57,6 +64,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     setNotifications(prev => [newNotif, ...prev].slice(0, 50)); // Keep only last 50
     
+    // Send native push notification if permitted
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(notif.title, {
+          body: notif.message,
+          icon: '/pwa-192x192.png'
+        });
+      } catch (e) {
+        console.warn('Native notification failed', e);
+      }
+    }
+
     // Show toast
     toast.custom((t) => (
       <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full glass-dark shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 overflow-hidden`}>
