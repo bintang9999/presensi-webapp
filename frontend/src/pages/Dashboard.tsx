@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, PartyPopper, MapPin, Rocket, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, PartyPopper, MapPin, Rocket } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -669,7 +669,7 @@ const Dashboard = () => {
               const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
               hari = days[dateObj.getDay()];
             }
-            const notifMessage = `Kelas ${sch.nama_matakuliah}${namaHari} diadakan secara Elearning.`;
+            const notifMessage = `Kelas ${sch.nama_matakuliah}${hari ? ` pada hari ${hari}` : ''} diadakan secara Elearning.`;
             const notifTitle = 'Perhatian: Kelas Elearning!';
 
             const alreadyExists = notificationsRef.current.some(n => 

@@ -94,7 +94,7 @@ const Profil = () => {
                     drag="x"
                     dragConstraints={{ left: -100, right: 0 }}
                     dragElastic={0.2}
-                    onDragEnd={(e, info) => {
+                    onDragEnd={(_, info) => {
                       if (info.offset.x < -60) {
                         deleteNotification(notif.id);
                       }
