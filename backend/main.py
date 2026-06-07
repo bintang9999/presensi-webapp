@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import timedelta
 import uvicorn
 from contextlib import asynccontextmanager
@@ -9,8 +10,8 @@ from contextlib import asynccontextmanager
 from config import settings
 from database import engine, Base, get_db
 from models import AttendanceLog, AbsenState, User, MatkulAutoPref
-from schemas import Token, AttendanceLogResponse, ScheduleItem, ToggleMatkulRequest
-from auth import create_access_token, get_current_user
+from schemas import Token, AttendanceLogResponse, ScheduleItem, ToggleMatkulRequest, AdminLogResponse
+from auth import create_access_token, get_current_user, require_approved_user, require_admin
 from almaata import AlmaAtaService, get_md5
 from scheduler import start_scheduler, check_user_attendance
 
@@ -19,6 +20,19 @@ Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    with engine.begin() as conn:
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_approved BOOLEAN DEFAULT 0"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"))
+        except Exception:
+            pass
+            
+        try:
+            conn.execute(text("UPDATE users SET is_approved = 1 WHERE is_approved IS NULL"))
+            conn.execute(text("UPDATE users SET is_approved = 1, role = 'admin' WHERE npm = '243200329'"))
+        except Exception as e:
+            print("Migration update error:", e)
+            
     start_scheduler()
     yield
 
@@ -59,13 +73,19 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
         
     # Simpan atau update User di Database
+    ADMIN_NPM = "243200329"
     user = db.query(User).filter(User.npm == npm).first()
     if user:
         user.f1 = f1
         user.f2 = f2
         user.id_mahasiswa = id_mhs
+        if user.npm == ADMIN_NPM:
+            user.role = "admin"
+            user.is_approved = True
     else:
-        user = User(npm=npm, f1=f1, f2=f2, id_mahasiswa=id_mhs)
+        role = "admin" if npm == ADMIN_NPM else "user"
+        is_approved = True if npm == ADMIN_NPM else False
+        user = User(npm=npm, f1=f1, f2=f2, id_mahasiswa=id_mhs, role=role, is_approved=is_approved)
         db.add(user)
     db.commit()
 
@@ -93,11 +113,13 @@ async def get_schedule(current_user: User = Depends(get_current_user), db: Sessi
     for item in data:
         matkul = item.get("nama_matakuliah")
         item["is_auto"] = pref_dict.get(matkul, True)
+        if not current_user.is_approved:
+            item["kode"] = "-"
         
     return data
 
 @app.post("/api/toggle-matkul")
-async def toggle_matkul(req: ToggleMatkulRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def toggle_matkul(req: ToggleMatkulRequest, current_user: User = Depends(require_approved_user), db: Session = Depends(get_db)):
     pref = db.query(MatkulAutoPref).filter(
         MatkulAutoPref.npm == current_user.npm,
         MatkulAutoPref.nama_matakuliah == req.nama_matakuliah
@@ -117,7 +139,7 @@ async def toggle_matkul(req: ToggleMatkulRequest, current_user: User = Depends(g
     return {"status": "success", "matkul": req.nama_matakuliah, "is_auto": pref.is_auto}
 
 @app.post("/api/attendance/{id_pertemuan}")
-async def submit_manual_attendance(id_pertemuan: str, kode: str, matkul: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def submit_manual_attendance(id_pertemuan: str, kode: str, matkul: str, current_user: User = Depends(require_approved_user), db: Session = Depends(get_db)):
     almaata_service = AlmaAtaService(
         npm=current_user.npm, 
         f1=current_user.f1, 
@@ -157,6 +179,33 @@ async def get_logs(current_user: User = Depends(get_current_user), db: Session =
     logs = db.query(AttendanceLog).filter(AttendanceLog.npm == current_user.npm).order_by(AttendanceLog.timestamp.desc()).limit(50).all()
     return logs
 
+@app.get("/api/admin/logs", response_model=list[AdminLogResponse])
+async def get_admin_logs(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    logs = db.query(
+        AttendanceLog.id,
+        AttendanceLog.npm,
+        User.nama,
+        AttendanceLog.matkul,
+        AttendanceLog.kode,
+        AttendanceLog.status,
+        AttendanceLog.message,
+        AttendanceLog.timestamp
+    ).outerjoin(User, AttendanceLog.npm == User.npm).order_by(AttendanceLog.timestamp.desc()).limit(150).all()
+    
+    result = []
+    for log in logs:
+        result.append({
+            "id": log.id,
+            "npm": log.npm,
+            "nama": log.nama if log.nama else "Sistem / Anonim",
+            "matkul": log.matkul,
+            "kode": log.kode,
+            "status": log.status,
+            "message": log.message,
+            "timestamp": log.timestamp
+        })
+    return result
+
 @app.get("/api/status")
 async def get_status(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not current_user.nama:
@@ -180,11 +229,13 @@ async def get_status(current_user: User = Depends(get_current_user), db: Session
     return {
         "npm": current_user.npm, 
         "is_active": current_user.is_active, 
-        "nama": current_user.nama
+        "nama": current_user.nama,
+        "is_approved": current_user.is_approved,
+        "role": current_user.role
     }
 
 @app.post("/api/toggle-auto")
-async def toggle_auto(background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def toggle_auto(background_tasks: BackgroundTasks, current_user: User = Depends(require_approved_user), db: Session = Depends(get_db)):
     current_user.is_active = not current_user.is_active
     db.commit()
     
@@ -239,6 +290,26 @@ async def health_check():
         "status": "ok",
         "auto_presensi": True
     }
+
+@app.get("/api/admin/users")
+async def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    return [{
+        "npm": u.npm,
+        "nama": u.nama,
+        "is_active": u.is_active,
+        "is_approved": u.is_approved,
+        "role": u.role
+    } for u in users]
+
+@app.post("/api/admin/users/{npm}/approve")
+async def approve_user(npm: str, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.npm == npm).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_approved = True
+    db.commit()
+    return {"status": "success", "message": f"User {npm} approved"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

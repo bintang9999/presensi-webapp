@@ -16,32 +16,29 @@ interface NotificationContextType {
   addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'read'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  deleteNotification: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('notifications');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((n: any) => ({ ...n, time: new Date(n.time) }));
+      }
+    } catch (e) {
+      console.error('Failed to parse notifications', e);
+    }
+    return [];
+  });
 
   // Request Notification Permission
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
-    }
-  }, []);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('notifications');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Convert date strings back to Date objects
-        const withDates = parsed.map((n: any) => ({ ...n, time: new Date(n.time) }));
-        setNotifications(withDates);
-      } catch (e) {
-        console.error('Failed to parse notifications', e);
-      }
     }
   }, []);
 
@@ -116,10 +113,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification }}>
       {children}
     </NotificationContext.Provider>
   );

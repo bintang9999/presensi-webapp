@@ -12,7 +12,7 @@ def check_user_attendance(user_npm: str, db_session=None):
     db = db_session if db_session else SessionLocal()
     try:
         user = db.query(User).filter(User.npm == user_npm).first()
-        if not user or not user.is_active:
+        if not user or not user.is_active or not user.is_approved:
             return
 
         print(f"Checking for User: {user.npm}")
@@ -82,11 +82,24 @@ def check_and_submit_attendance():
     print(f"[{time.strftime('%H:%M:%S')}] Running automatic attendance check for all users...")
     db = SessionLocal()
     try:
-        users = db.query(User).filter(User.is_active == True).all()
+        users = db.query(User).filter(User.is_active == True, User.is_approved == True).all()
         for user in users:
             check_user_attendance(user.npm, db)
     except Exception as e:
         print(f"Error in scheduler job: {e}")
+        # Log error
+        try:
+            err_log = AttendanceLog(
+                npm="SYSTEM",
+                matkul="Auto Presensi Scheduler",
+                kode="ERROR",
+                status="FAILED",
+                message=f"Terjadi kesalahan pada scheduler: {str(e)}"
+            )
+            db.add(err_log)
+            db.commit()
+        except:
+            pass
     finally:
         db.close()
 

@@ -9,8 +9,10 @@ class User(Base):
     f1 = Column(String)
     f2 = Column(String)
     id_mahasiswa = Column(String)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=False)
     nama = Column(String, nullable=True)
+    is_approved = Column(Boolean, default=False)
+    role = Column(String, default="user")
 
 class AttendanceLog(Base):
     __tablename__ = "attendance_logs"

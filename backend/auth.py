@@ -44,3 +44,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         raise credentials_exception
         
     return user
+
+async def require_approved_user(current_user: User = Depends(get_current_user)):
+    if not current_user.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akun kamu belum disetujui oleh admin.",
+        )
+    return current_user
+
+async def require_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin" and current_user.npm != "243200329":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya admin yang bisa mengakses resource ini.",
+        )
+    return current_user

@@ -83,7 +83,7 @@ const Layout = ({ children }: LayoutProps) => {
       </motion.aside>
 
       {/* Konten Utama */}
-      <main className={`flex-1 min-w-0 overflow-y-auto relative pb-24 md:pb-0 ${unreadCount > 0 ? 'pt-20' : 'pt-4'} md:pt-0`}>
+      <main className={`flex-1 min-w-0 overflow-y-auto relative pb-32 md:pb-0 ${unreadCount > 0 ? 'pt-20' : 'pt-4'} md:pt-0`}>
         {/* Floating Notification Bell */}
         <div className="fixed top-4 right-4 md:top-8 md:right-8 z-50 flex gap-2">
           {(unreadCount > 0 || showNotifications) && (
@@ -200,7 +200,10 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
 
       {/* Bottom Navigation untuk Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-slate-200 dark:border-white/5 z-50 px-2 py-2 sm:px-6 sm:py-3 flex justify-between items-center">
+      <div 
+        className="md:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-slate-200 dark:border-white/5 z-50 px-2 pt-2 sm:px-6 sm:pt-3 flex justify-between items-center"
+        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
+      >
         {menuItems.map((item) => (
           <NavLink
             key={item.path}

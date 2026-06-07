@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Sun, Moon, Bell, LogOut, ChevronRight, GraduationCap, ArrowLeft, CheckCircle2, CalendarDays } from 'lucide-react';
+import { User, Sun, Moon, Bell, LogOut, ChevronRight, GraduationCap, ArrowLeft, CheckCircle2, CalendarDays, Activity, XCircle, CheckCircle, Trash2 } from 'lucide-react';
 import api from '../api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -10,9 +10,10 @@ const Profil = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { theme, toggleTheme } = useTheme();
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, deleteNotification } = useNotifications();
   const [userName, setUserName] = useState<string>('');
   const [userNpm, setUserNpm] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>('user');
   const [loading, setLoading] = useState(true);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
 
@@ -23,6 +24,7 @@ const Profil = () => {
       try {
         const res = await api.get('/status');
         setUserNpm(res.data.npm);
+        setUserRole(res.data.role || 'user');
         if (res.data.nama) {
           setUserName(res.data.nama);
         }
@@ -39,6 +41,14 @@ const Profil = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
+
+  if (view === 'admin') {
+    return <AdminView setSearchParams={setSearchParams} />;
+  }
+
+  if (view === 'admin-logs') {
+    return <AdminLogsView setSearchParams={setSearchParams} />;
+  }
 
   if (view === 'notifikasi') {
     return (
@@ -76,20 +86,31 @@ const Profil = () => {
           ) : (
             <div className="space-y-4">
               {notifications.map((notif, index) => (
-                <motion.div 
-                  key={notif.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    if (!notif.read) markAsRead(notif.id);
-                  }}
-                  className={`glass-dark rounded-3xl p-5 border cursor-pointer transition-all hover:scale-[1.01] ${
-                    notif.read 
-                      ? 'border-slate-200 dark:border-white/5 opacity-80 hover:opacity-100' 
-                      : 'border-blue-300 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
-                  }`}
-                >
+                <div key={notif.id} className="relative rounded-3xl overflow-hidden bg-red-500/90 dark:bg-red-500/80">
+                  <div className="absolute inset-y-0 right-0 w-24 flex items-center justify-end px-6">
+                    <Trash2 className="w-6 h-6 text-white" />
+                  </div>
+                  <motion.div 
+                    drag="x"
+                    dragConstraints={{ left: -100, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(e, info) => {
+                      if (info.offset.x < -60) {
+                        deleteNotification(notif.id);
+                      }
+                    }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0, x: 0 }}
+                    transition={{ type: "spring", bounce: 0, duration: 0.4, delay: index * 0.05 }}
+                    onClick={() => {
+                      if (!notif.read) markAsRead(notif.id);
+                    }}
+                    className={`relative z-10 glass-dark rounded-3xl p-5 border cursor-pointer transition-colors w-full h-full ${
+                      notif.read 
+                        ? 'border-slate-200 dark:border-white/5 bg-white/95 dark:bg-slate-900/95' 
+                        : 'border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-slate-800 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                    }`}
+                  >
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 mt-1">
                       {notif.type === 'open' ? (
@@ -116,7 +137,8 @@ const Profil = () => {
                       </p>
                     </div>
                   </div>
-                </motion.div>
+                  </motion.div>
+                </div>
               ))}
             </div>
           )}
@@ -238,6 +260,42 @@ const Profil = () => {
               </div>
               <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
             </button>
+
+            {/* Admin Menu */}
+            {(userRole === 'admin' || userNpm === '243200329') && (
+              <>
+                <button 
+                  onClick={() => setSearchParams({ view: 'admin' })}
+                  className="w-full flex items-center justify-between p-4 px-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-t border-slate-100 dark:border-slate-800"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-slate-800 dark:text-white">Menu Admin</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Kelola pengguna web presensi</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-purple-500 transition-colors" />
+                </button>
+                <button 
+                  onClick={() => setSearchParams({ view: 'admin-logs' })}
+                  className="w-full flex items-center justify-between p-4 px-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-t border-slate-100 dark:border-slate-800"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-pink-50 dark:bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center">
+                      <Activity className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-slate-800 dark:text-white">Log Sistem & Pengguna</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Pantau auto-presensi secara real-time</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-pink-500 transition-colors" />
+                </button>
+              </>
+            )}
           </div>
         </motion.div>
 
@@ -261,4 +319,174 @@ const Profil = () => {
   );
 };
 
+const AdminView = ({ setSearchParams }: { setSearchParams: any }) => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/admin/users');
+      setUsers(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleApprove = async (npm: string) => {
+    try {
+      await api.post(`/admin/users/${npm}/approve`);
+      fetchUsers(); // Refresh data
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-8 pb-24 md:pb-8 min-h-screen">
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="glass-dark rounded-3xl p-6 md:px-8 mb-8 border border-slate-200 dark:border-white/5 flex items-center gap-4 sticky top-4 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg"
+      >
+        <button 
+          onClick={() => setSearchParams({})}
+          className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Menu Admin</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Daftar pengguna dan persetujuan</p>
+        </div>
+      </motion.header>
+
+      <div className="max-w-3xl mx-auto">
+        {loading ? (
+          <p className="text-center text-slate-500">Memuat data pengguna...</p>
+        ) : (
+          <div className="space-y-4">
+            {users.map((user, index) => (
+              <motion.div 
+                key={user.npm}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="glass-dark rounded-3xl p-5 border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-4"
+              >
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{user.nama || 'Tanpa Nama'}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">NPM: {user.npm} • Role: {user.role}</p>
+                  <p className={`text-xs mt-1 font-bold ${user.is_approved ? 'text-emerald-500' : 'text-orange-500'}`}>
+                    {user.is_approved ? 'Disetujui' : 'Menunggu Persetujuan'}
+                  </p>
+                </div>
+                {!user.is_approved && (
+                  <button 
+                    onClick={() => handleApprove(user.npm)}
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl transition-colors"
+                  >
+                    Setujui Akun
+                  </button>
+                )}
+              </motion.div>
+            ))}
+            {users.length === 0 && (
+              <p className="text-center text-slate-500">Belum ada pengguna.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default Profil;
+
+const AdminLogsView = ({ setSearchParams }: { setSearchParams: any }) => {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLogs = async () => {
+    try {
+      const res = await api.get('/admin/logs');
+      setLogs(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(() => {
+      fetchLogs();
+    }, 5000); // Poll every 5 seconds for real-time
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="p-4 md:p-8 pb-24 md:pb-8 min-h-screen">
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="glass-dark rounded-3xl p-6 md:px-8 mb-8 border border-slate-200 dark:border-white/5 flex items-center gap-4 sticky top-4 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg"
+      >
+        <button 
+          onClick={() => setSearchParams({})}
+          className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Log Real-Time</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Aktivitas Auto-Presensi & Sistem</p>
+        </div>
+      </motion.header>
+
+      <div className="max-w-3xl mx-auto">
+        {loading && logs.length === 0 ? (
+          <p className="text-center text-slate-500">Memuat log...</p>
+        ) : (
+          <div className="space-y-4">
+            {logs.map((log, index) => (
+              <motion.div 
+                key={log.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(index * 0.05, 0.5) }}
+                className={`glass-dark rounded-3xl p-5 border flex items-start gap-4 ${log.npm === 'SYSTEM' ? 'border-blue-500/30 bg-blue-500/5' : 'border-slate-200 dark:border-white/5'}`}
+              >
+                <div className={`mt-1 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${log.npm === 'SYSTEM' ? 'bg-blue-500/20 text-blue-400' : (log.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400')}`}>
+                  {log.npm === 'SYSTEM' ? <Activity className="w-5 h-5" /> : (log.status === 'SUCCESS' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />)}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-md font-bold text-slate-800 dark:text-white">
+                    {log.nama} <span className="text-xs text-slate-500 font-normal">({log.npm})</span>
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                    <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] mr-2 border border-slate-200 dark:border-slate-700">{log.kode}</span>
+                    {log.matkul}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 p-2 bg-slate-50 dark:bg-black/30 rounded-xl">{log.message}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-3 font-mono text-right">
+                    {new Date(log.timestamp).toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+            {logs.length === 0 && (
+              <p className="text-center text-slate-500">Belum ada log.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

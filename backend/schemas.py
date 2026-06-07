@@ -20,6 +20,19 @@ class AttendanceLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class AdminLogResponse(BaseModel):
+    id: int
+    npm: str
+    nama: str | None
+    matkul: str
+    kode: str
+    status: str
+    message: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
 class ScheduleItem(BaseModel):
     id_pertemuan_presensi: str
     nama_matakuliah: str

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, PartyPopper, MapPin, Rocket } from 'lucide-react';
+import { Calendar, Clock, RefreshCw, Activity, CheckCircle, CheckCircle2, ChevronDown, ChevronUp, PartyPopper, MapPin, Rocket, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -76,7 +76,7 @@ const getScheduleStatus = (item: ScheduleItem): string => {
   return computedStatus;
 };
 
-const ScheduleCard = ({ item, computedStatusPertemuan, actionLoading, handleManualAttendance }: { item: ScheduleItem, computedStatusPertemuan: string, actionLoading: string | null, handleManualAttendance: any }) => {
+const ScheduleCard = ({ item, computedStatusPertemuan, actionLoading, handleManualAttendance, isApproved }: { item: ScheduleItem, computedStatusPertemuan: string, actionLoading: string | null, handleManualAttendance: any, isApproved: boolean }) => {
   const isDone = item.status_presensi !== "0";
   
   return (
@@ -128,45 +128,40 @@ const ScheduleCard = ({ item, computedStatusPertemuan, actionLoading, handleManu
         </div>
 
         {/* Bottom Action Row */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex flex-col gap-1">
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">KODE PRESENSI</p>
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 min-w-[60px] flex items-center justify-center">
-              <span className="font-mono text-sm font-bold text-slate-600 dark:text-slate-300 tracking-widest">
-                {item.kode && item.kode !== "-" ? item.kode : '---'}
-              </span>
+        {isApproved && item.kode && item.kode !== "-" && (
+          <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100 dark:border-white/5">
+            <div className="flex flex-col gap-1">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">KODE PRESENSI</p>
+              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50 min-w-[60px] flex items-center justify-center">
+                <span className="font-mono text-sm font-bold text-slate-600 dark:text-slate-300 tracking-widest">
+                  {item.kode}
+                </span>
+              </div>
             </div>
+            
+            {!isDone && (
+              <button
+                onClick={() => handleManualAttendance(item.id_pertemuan_presensi, item.kode || '', item.nama_matakuliah)}
+                disabled={actionLoading === item.id_pertemuan_presensi}
+                className="px-4 sm:px-6 py-2 sm:py-2.5 font-bold rounded-xl transition-all duration-300 active:scale-95 flex items-center gap-2 shadow-sm bg-blue-600 hover:bg-blue-700 text-white dark:bg-transparent dark:border dark:border-cyan-400 dark:text-cyan-400 dark:hover:bg-cyan-400/10 dark:hover:text-cyan-300 dark:hover:shadow-[0_0_20px_rgba(0,240,255,0.4)] dark:hover:border-cyan-300"
+              >
+                {actionLoading === item.id_pertemuan_presensi ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Rocket className="w-4 h-4" /> <span className="text-sm">Presensi</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          
-          {!isDone && (
-            <button
-              onClick={() => handleManualAttendance(item.id_pertemuan_presensi, item.kode || '', item.nama_matakuliah)}
-              disabled={actionLoading === item.id_pertemuan_presensi || (computedStatusPertemuan === 'Belum Dimulai' && (!item.kode || item.kode === '-'))}
-              className={`px-4 sm:px-6 py-2 sm:py-2.5 font-bold rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-sm
-                ${(computedStatusPertemuan === 'Belum Dimulai' && (!item.kode || item.kode === '-'))
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }
-              `}
-            >
-              {actionLoading === item.id_pertemuan_presensi ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (computedStatusPertemuan === 'Belum Dimulai' && (!item.kode || item.kode === '-')) ? (
-                <span className="text-[10px] sm:text-xs">Belum Tersedia</span>
-              ) : (
-                <>
-                  <Rocket className="w-4 h-4" /> <span className="text-sm">Presensi</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManualAttendance }: { date: string, items: ScheduleItem[], groupIndex: number, actionLoading: string | null, handleManualAttendance: any }) => {
+const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManualAttendance, isApproved }: { date: string, items: ScheduleItem[], groupIndex: number, actionLoading: string | null, handleManualAttendance: any, isApproved: boolean }) => {
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
   const [isGroupOpen, setIsGroupOpen] = useState(true);
   
@@ -273,26 +268,27 @@ const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManua
         className={`group w-full flex flex-col px-5 sm:px-6 py-4 sm:py-5 transition-all hover:opacity-90 text-left ${themeConfig.bg} ${isGroupOpen ? 'border-b border-slate-100 dark:border-slate-800/50' : ''}`}
       >
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Calendar className={`w-4 h-4 sm:w-5 sm:h-5 ${themeConfig.iconColor}`} />
-            <h3 className={`font-bold sm:text-lg ${themeConfig.textDate}`}>
-              {date !== 'Unknown Date' ? format(dateObj, 'EEEE, dd MMM yyyy', { locale: id }) : 'Tanpa Tanggal'}
-            </h3>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <Calendar className={`w-4 h-4 ${themeConfig.iconColor}`} />
+              <h3 className={`font-bold text-sm sm:text-base ${themeConfig.textDate}`}>
+                {date !== 'Unknown Date' ? format(dateObj, 'EEEE, dd MMM yyyy', { locale: id }) : 'Tanpa Tanggal'}
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {themeConfig.label && (
+                <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border shadow-sm ${themeConfig.badgeBg} ${themeConfig.badgeText} ${themeConfig.badgeBorder}`}>
+                  {themeConfig.label}
+                </span>
+              )}
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {themeConfig.label && '•'} {rightText}
+              </span>
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center shrink-0 group-hover:bg-slate-300/50 dark:group-hover:bg-slate-600/50 transition-colors">
-            {isGroupOpen ? <ChevronUp className="w-5 h-5 text-slate-600 dark:text-slate-300" /> : <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-300" />}
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center shrink-0 group-hover:bg-slate-300/50 dark:group-hover:bg-slate-600/50 transition-colors ml-2">
+            {isGroupOpen ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-300" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-300" />}
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 mt-2 sm:ml-8 ml-6">
-          {themeConfig.label && (
-            <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded uppercase border shadow-sm ${themeConfig.badgeBg} ${themeConfig.badgeText} ${themeConfig.badgeBorder}`}>
-              {themeConfig.label}
-            </span>
-          )}
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            {themeConfig.label && '•'} {rightText}
-          </span>
         </div>
 
         {!isGroupOpen && firstMainClass && (
@@ -322,6 +318,7 @@ const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManua
                     computedStatusPertemuan={status} 
                     actionLoading={actionLoading} 
                     handleManualAttendance={handleManualAttendance} 
+                    isApproved={isApproved}
                   />
                 </div>
               ))}
@@ -356,6 +353,7 @@ const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManua
                             computedStatusPertemuan={status} 
                             actionLoading={actionLoading} 
                             handleManualAttendance={handleManualAttendance} 
+                            isApproved={isApproved}
                           />
                         </div>
                       ))}
@@ -393,6 +391,10 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
   upcomingOrOngoingClasses.sort((a, b) => (a.jam_mulai || '').localeCompare(b.jam_mulai || ''));
 
   const nextClass = upcomingOrOngoingClasses[0];
+
+  if (todaysClasses.length === 0) {
+    return null;
+  }
 
   if (!nextClass) {
     return (
@@ -458,7 +460,14 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
         <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isOngoing ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
           {headerText}
         </span>
-        <h3 className="text-slate-800 dark:text-white font-bold text-[13px] sm:text-lg leading-snug mb-0.5 sm:mb-1 truncate">{nextClass.nama_matakuliah}</h3>
+        <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+          <h3 className="text-slate-800 dark:text-white font-bold text-[13px] sm:text-lg leading-snug truncate">{nextClass.nama_matakuliah}</h3>
+          {nextClass.ruang && (
+            <span className="shrink-0 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/50 flex items-center gap-1">
+              <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {nextClass.ruang}
+            </span>
+          )}
+        </div>
         
         {isOngoing ? (
           <div className="flex flex-col gap-1.5 sm:gap-2 w-full mt-0.5 sm:mt-1">
@@ -488,7 +497,13 @@ const NextClassCard = ({ schedules, todayStr }: { schedules: ScheduleItem[], tod
 };
 
 const Dashboard = () => {
-  const { addNotification } = useNotifications();
+  const { notifications, addNotification } = useNotifications();
+  const notificationsRef = useRef(notifications);
+  
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [jadwalUjian, setJadwalUjian] = useState<UjianItem[]>([]);
   const schedulesRef = useRef<ScheduleItem[]>([]);
@@ -498,6 +513,7 @@ const Dashboard = () => {
   const [showRocket, setShowRocket] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [lastUpdated, setLastUpdated] = useState<string>('--:--');
+  const [isApproved, setIsApproved] = useState<boolean>(true);
   
   type PresensiStatus = 'unknown' | 'active' | 'unavailable/manual' | 'offline';
   const lastHealthStatusRef = useRef<PresensiStatus>(
@@ -555,38 +571,40 @@ const Dashboard = () => {
       if (currentHealthState !== lastHealthStatusRef.current) {
         const prev = lastHealthStatusRef.current;
         
-        if (currentHealthState === 'active') {
-          if (prev === 'offline') {
-            toast.success(
+        if (prev !== 'unknown') {
+          if (currentHealthState === 'active') {
+            if (prev === 'offline') {
+              toast.success(
+                <div>
+                  <b className="block">Auto Presensi Aktif</b>
+                  <span className="text-xs">Sistem kembali online. Presensi otomatis siap digunakan.</span>
+                </div>, { duration: 4000 }
+              );
+            } else {
+              toast.success(
+                <div>
+                  <b className="block">Auto Presensi Aktif</b>
+                  <span className="text-xs">Presensi akan dilakukan otomatis saat kode tersedia.</span>
+                </div>, { duration: 4000 }
+              );
+            }
+          } else if (currentHealthState === 'unavailable/manual') {
+            if (prev === 'active') {
+              toast(
+                <div>
+                  <b className="block">Auto Presensi Tidak Tersedia</b>
+                  <span className="text-xs">Silakan gunakan presensi manual untuk sementara.</span>
+                </div>, { icon: '⚠️', duration: 5000 }
+              );
+            }
+          } else if (currentHealthState === 'offline') {
+            toast.error(
               <div>
-                <b className="block">Auto Presensi Aktif</b>
-                <span className="text-xs">Sistem kembali online. Presensi otomatis siap digunakan.</span>
-              </div>, { duration: 4000 }
-            );
-          } else {
-            toast.success(
-              <div>
-                <b className="block">Auto Presensi Aktif</b>
-                <span className="text-xs">Presensi akan dilakukan otomatis saat kode tersedia.</span>
-              </div>, { duration: 4000 }
+                <b className="block">Auto Presensi Offline</b>
+                <span className="text-xs">Silakan gunakan presensi manual sampai sistem kembali normal.</span>
+              </div>, { duration: 5000 }
             );
           }
-        } else if (currentHealthState === 'unavailable/manual') {
-          if (prev === 'active') {
-            toast(
-              <div>
-                <b className="block">Auto Presensi Tidak Tersedia</b>
-                <span className="text-xs">Silakan gunakan presensi manual untuk sementara.</span>
-              </div>, { icon: '⚠️', duration: 5000 }
-            );
-          }
-        } else if (currentHealthState === 'offline') {
-          toast.error(
-            <div>
-              <b className="block">Auto Presensi Offline</b>
-              <span className="text-xs">Silakan gunakan presensi manual sampai sistem kembali normal.</span>
-            </div>, { duration: 5000 }
-          );
         }
         
         lastHealthStatusRef.current = currentHealthState;
@@ -633,12 +651,59 @@ const Dashboard = () => {
         });
       }
       
+      // Deteksi kelas Elearning (baik saat awal buka maupun jika ada perubahan)
+      try {
+        const todayStr = new Date().toISOString().split('T')[0]; // Reset notifikasi setiap hari
+        const storageKey = `notified_elearning_${todayStr}`;
+        const notifiedElearning = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        let newlyNotified = false;
+        
+        newSchedules.forEach(sch => {
+          const ruangLower = sch.ruang?.toLowerCase() || '';
+          const isElearning = ruangLower.includes('elearning') || ruangLower.includes('e-learning') || ruangLower.includes('daring') || ruangLower.includes('online');
+          
+          if (isElearning && !notifiedElearning.includes(sch.nama_matakuliah)) {
+            let hari = "";
+            if (sch.tanggal) {
+              const dateObj = new Date(sch.tanggal.split(' ')[0]);
+              const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+              hari = days[dateObj.getDay()];
+            }
+            const notifMessage = `Kelas ${sch.nama_matakuliah}${namaHari} diadakan secara Elearning.`;
+            const notifTitle = 'Perhatian: Kelas Elearning!';
+
+            const alreadyExists = notificationsRef.current.some(n => 
+              n.title === notifTitle && 
+              n.message === notifMessage && 
+              new Date(n.time).toISOString().split('T')[0] === todayStr
+            );
+
+            if (!alreadyExists) {
+              addNotification({
+                title: notifTitle,
+                message: notifMessage,
+                type: 'upcoming'
+              });
+            }
+            notifiedElearning.push(sch.nama_matakuliah);
+            newlyNotified = true;
+          }
+        });
+        
+        if (newlyNotified) {
+          localStorage.setItem(storageKey, JSON.stringify(notifiedElearning));
+        }
+      } catch (e) {
+        console.error("Error processing elearning notifications", e);
+      }
+      
       setSchedules(newSchedules);
       schedulesRef.current = newSchedules;
       setIsAutoActive(statusRes.data.is_active);
       if (statusRes.data.nama) {
         setUserName(statusRes.data.nama);
       }
+      setIsApproved(statusRes.data.is_approved ?? true);
       setLastUpdated(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err) {
       console.error('Failed to fetch data', err);
@@ -853,6 +918,7 @@ const Dashboard = () => {
               )}
             </div>
           </div>
+
           {loading && schedules.length === 0 && jadwalUjian.length === 0 ? (
             <div className="w-full bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-3 sm:gap-4 animate-pulse">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700/50 shrink-0"></div>
@@ -875,16 +941,20 @@ const Dashboard = () => {
               <span className="truncate">Jadwal Perkuliahan</span>
             </h2>
             <div className="flex items-center gap-2 sm:gap-3 bg-white/50 dark:bg-slate-900/50 px-2 sm:px-4 py-1 sm:py-1.5 rounded-full border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none shrink-0">
-              <button 
-                onClick={handleToggleAuto}
-                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
-              >
-                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isAutoActive ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-400 dark:bg-slate-500'}`} />
-                <span className={`text-[8px] sm:text-[10px] font-bold tracking-wider ${isAutoActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
-                  {isAutoActive ? 'AUTO PRESENSI' : 'MANUAL PRESENSI'}
-                </span>
-              </button>
-              <div className="w-px h-3 sm:h-4 bg-slate-300 dark:bg-white/10" />
+              {isApproved && (
+                <>
+                  <button 
+                    onClick={handleToggleAuto}
+                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                  >
+                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isAutoActive ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-400 dark:bg-slate-500'}`} />
+                    <span className={`text-[8px] sm:text-[10px] font-bold tracking-wider ${isAutoActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                      {isAutoActive ? 'AUTO PRESENSI' : 'MANUAL PRESENSI'}
+                    </span>
+                  </button>
+                  <div className="w-px h-3 sm:h-4 bg-slate-300 dark:bg-white/10" />
+                </>
+              )}
               <button 
                 onClick={fetchData} 
                 disabled={loading}
@@ -913,6 +983,7 @@ const Dashboard = () => {
                       groupIndex={groupIndex} 
                       actionLoading={actionLoading} 
                       handleManualAttendance={handleManualAttendance} 
+                      isApproved={isApproved}
                     />
                   ))}
                 </AnimatePresence>
