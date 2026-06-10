@@ -1,10 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, User, Loader2 } from 'lucide-react';
 import api from '../api';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Login = () => {
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    // Memaksa mode dark agar tampilan login selalu mirip dashboard dark mode
+    const root = window.document.documentElement;
+    root.classList.add('dark');
+    root.classList.remove('light');
+    
+    return () => {
+      // Mengembalikan tema sesuai preferensi user saat unmount
+      if (theme === 'light') {
+        root.classList.remove('dark');
+        root.classList.add('light');
+      }
+    };
+  }, [theme]);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,40 +55,19 @@ const Login = () => {
     }
   };
 
-  const handleDemo = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const formData = new URLSearchParams();
-      formData.append('username', 'demo');
-      formData.append('password', 'demo');
-      
-      const response = await api.post('/login', formData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      localStorage.setItem('token', response.data.access_token);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Demo login gagal.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="min-h-screen flex bg-transparent overflow-hidden">
       {/* Login Form */}
       <div className="w-full flex items-center justify-center p-6 md:p-12 relative">
-        <div className="absolute inset-0 bg-animate bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05)_0%,transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.05)_0%,transparent_30%)]" />
         
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="glass-dark w-full max-w-md p-8 md:p-10 rounded-3xl z-10"
+          className="glass-dark w-full max-w-md p-5 md:p-10 rounded-3xl z-10"
         >
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Selamat Datang</h2>
+          <div className="text-center mb-5">
+            <img src="/RAICINK-LOGO.png" alt="RAICINK" className="h-32 mx-auto mb-1 object-contain" />
             <p className="text-slate-500 dark:text-slate-400 text-sm">Masuk dengan Akun Raising</p>
           </div>
 
@@ -128,7 +124,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-4 px-4 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold rounded-2xl hover:from-emerald-400 hover:to-blue-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full mt-4 py-4 px-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:-translate-y-0.5 active:translate-y-0"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
@@ -140,14 +136,6 @@ const Login = () => {
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={handleDemo}
-              disabled={loading}
-              className="w-full mt-3 py-3 px-4 bg-transparent text-slate-600 dark:text-slate-300 font-semibold rounded-2xl border border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all flex items-center justify-center text-sm"
-            >
-              Mode Demo (API Kampus Error)
-            </button>
           </form>
         </motion.div>
       </div>

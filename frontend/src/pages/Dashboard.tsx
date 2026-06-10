@@ -265,17 +265,17 @@ const ScheduleDateGroup = ({ date, items, groupIndex, actionLoading, handleManua
       {/* Accordion Toggle Header */}
       <button 
         onClick={() => setIsGroupOpen(!isGroupOpen)}
-        className={`group w-full flex flex-col px-5 sm:px-6 py-4 sm:py-5 transition-all hover:opacity-90 text-left ${themeConfig.bg} ${isGroupOpen ? 'border-b border-slate-100 dark:border-slate-800/50' : ''}`}
+        className={`group w-full flex flex-col px-4 sm:px-6 py-3.5 sm:py-5 transition-all hover:opacity-90 text-left ${themeConfig.bg} ${isGroupOpen ? 'border-b border-slate-100 dark:border-slate-800/50' : ''}`}
       >
         <div className="flex items-center justify-between w-full">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <Calendar className={`w-4 h-4 ${themeConfig.iconColor}`} />
-              <h3 className={`font-bold text-sm sm:text-base ${themeConfig.textDate}`}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-4 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              <Calendar className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${themeConfig.iconColor}`} />
+              <h3 className={`font-bold text-[13px] sm:text-base whitespace-nowrap truncate ${themeConfig.textDate}`}>
                 {date !== 'Unknown Date' ? format(dateObj, 'EEEE, dd MMM yyyy', { locale: id }) : 'Tanpa Tanggal'}
               </h3>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0">
               {themeConfig.label && (
                 <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border shadow-sm ${themeConfig.badgeBg} ${themeConfig.badgeText} ${themeConfig.badgeBorder}`}>
                   {themeConfig.label}
@@ -632,11 +632,11 @@ const Dashboard = () => {
           const oldSch = schedulesRef.current.find(s => s.id_pertemuan_presensi === newSch.id_pertemuan_presensi);
           // Jika tadinya kode "-" (belum buka) lalu berubah jadi ada kode (sudah buka)
           if (oldSch && (!oldSch.kode || oldSch.kode === "-") && (newSch.kode && newSch.kode !== "-")) {
-            addNotification({
-              title: 'Presensi Dibuka!',
-              message: `Presensi untuk mata kuliah ${newSch.nama_matakuliah} telah dibuka.`,
-              type: 'open'
-            });
+              addNotification({
+                title: 'Presensi Dibuka!',
+                message: `Presensi untuk mata kuliah ${newSch.nama_matakuliah} telah dibuka.`,
+                type: 'open'
+              });
           }
           // Jika tadinya belum absen, lalu jadi sudah absen secara otomatis (bukan karena klik tombol manual saat loading)
           if (oldSch && oldSch.status_presensi === "0" && newSch.status_presensi !== "0" && actionLoading !== newSch.id_pertemuan_presensi) {
@@ -682,7 +682,8 @@ const Dashboard = () => {
               addNotification({
                 title: notifTitle,
                 message: notifMessage,
-                type: 'upcoming'
+                type: 'upcoming',
+                silent: true
               });
             }
             notifiedElearning.push(sch.nama_matakuliah);
@@ -762,7 +763,8 @@ const Dashboard = () => {
             addNotification({
               title: 'Kelas Segera Dimulai',
               message: `5 menit lagi kelas ${sch.nama_matakuliah} akan dimulai.`,
-              type: 'upcoming'
+              type: 'upcoming',
+              silent: true
             });
             try {
               localStorage.setItem(notifiedKey, 'true');

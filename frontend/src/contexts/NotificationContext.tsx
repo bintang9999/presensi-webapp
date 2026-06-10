@@ -8,6 +8,7 @@ export interface NotificationItem {
   time: Date;
   read: boolean;
   type: 'open' | 'upcoming';
+  silent?: boolean;
 }
 
 interface NotificationContextType {
@@ -73,36 +74,38 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     }
 
-    // Show toast
-    toast.custom((t) => (
-      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full glass-dark shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 overflow-hidden`}>
-        <div className="flex-1 w-0 p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 pt-0.5">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${notif.type === 'open' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                🔔
+    // Show toast only if not silent
+    if (!notif.silent) {
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full glass-dark shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 overflow-hidden`}>
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 pt-0.5">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${notif.type === 'open' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                  🔔
+                </div>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-bold text-white">
+                  {notif.title}
+                </p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {notif.message}
+                </p>
               </div>
             </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-bold text-white">
-                {notif.title}
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
-                {notif.message}
-              </p>
-            </div>
+          </div>
+          <div className="flex border-l border-white/5">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 focus:outline-none"
+            >
+              Tutup
+            </button>
           </div>
         </div>
-        <div className="flex border-l border-white/5">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 focus:outline-none"
-          >
-            Tutup
-          </button>
-        </div>
-      </div>
-    ), { duration: 5000, position: 'top-right' });
+      ), { duration: 5000, position: 'top-right' });
+    }
   };
 
   const markAsRead = (id: string) => {

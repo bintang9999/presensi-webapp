@@ -208,18 +208,18 @@ const Tagihan = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap md:flex-nowrap items-center gap-6 md:gap-12 w-full md:w-auto bg-slate-50 dark:bg-slate-950/50 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border md:border-none border-slate-200 dark:border-slate-800/50">
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-6 md:gap-12 w-full md:w-auto bg-slate-50 dark:bg-slate-800/30 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border md:border-none border-slate-200 dark:border-white/5">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Biaya</span>
-                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{formatRupiah(item.jumlah)}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Biaya</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300/90">{formatRupiah(item.jumlah)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Dibayar</span>
-                    <span className="text-sm font-bold text-emerald-500 dark:text-emerald-400">{formatRupiah(item.sudah_dibayar)}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Dibayar</span>
+                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-500/90">{formatRupiah(item.sudah_dibayar)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Sisa</span>
-                    <span className="text-sm font-bold text-orange-500 dark:text-orange-400">{formatRupiah(item.sisa_tagihan)}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Sisa</span>
+                    <span className="text-sm font-bold text-orange-600 dark:text-orange-500/90">{formatRupiah(item.sisa_tagihan)}</span>
                   </div>
                 </div>
               </motion.div>

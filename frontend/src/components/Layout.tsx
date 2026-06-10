@@ -50,11 +50,18 @@ const Layout = ({ children }: LayoutProps) => {
           className="flex flex-col w-full h-full glass-dark rounded-[2rem] shadow-2xl overflow-hidden border border-white/5"
         >
           <div className="p-8 pb-6 flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-500/90 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0 border border-indigo-400/20">
-              <GraduationCap className="text-white w-6 h-6" />
-            </div>
+            {userName ? (
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`}
+                alt="Profile"
+                className="w-12 h-12 rounded-2xl shadow-lg shadow-indigo-500/30 shrink-0 border border-indigo-400/20 object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-indigo-500/90 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0 border border-indigo-400/20">
+                <GraduationCap className="text-white w-6 h-6" />
+              </div>
+            )}
             <div className="flex flex-col">
-              <h1 className="font-bold text-slate-800 dark:text-white leading-tight tracking-wide">CampusCare</h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{userName ? userName.split(' ')[0] : 'Admin'} • {userNpm || 'NIM'}</p>
             </div>
           </div>
