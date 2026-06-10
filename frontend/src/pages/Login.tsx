@@ -38,6 +38,26 @@ const Login = () => {
     }
   };
 
+  const handleDemo = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const formData = new URLSearchParams();
+      formData.append('username', 'demo');
+      formData.append('password', 'demo');
+      
+      const response = await api.post('/login', formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      localStorage.setItem('token', response.data.access_token);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Demo login gagal.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Login Form */}
@@ -118,6 +138,15 @@ const Login = () => {
               ) : (
                 'Masuk'
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDemo}
+              disabled={loading}
+              className="w-full mt-3 py-3 px-4 bg-transparent text-slate-600 dark:text-slate-300 font-semibold rounded-2xl border border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all flex items-center justify-center text-sm"
+            >
+              Mode Demo (API Kampus Error)
             </button>
           </form>
         </motion.div>

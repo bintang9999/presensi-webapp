@@ -43,44 +43,48 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex bg-transparent">
       {/* Sidebar untuk Desktop */}
-      <motion.aside 
-        initial={{ x: -250 }}
-        animate={{ x: 0 }}
-        className="hidden md:flex flex-col w-64 glass-dark border-r border-slate-200 dark:border-white/5 sticky top-0 h-screen"
-      >
-        <div className="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-white/5">
-          <div className="w-10 h-10 bg-gradient-to-tr from-emerald-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <GraduationCap className="text-white w-6 h-6" />
+      <div className="hidden md:flex flex-col w-[280px] h-screen sticky top-0 p-6 pl-8">
+        <motion.aside 
+          initial={{ x: -250, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="flex flex-col w-full h-full glass-dark rounded-[2rem] shadow-2xl overflow-hidden border border-white/5"
+        >
+          <div className="p-8 pb-6 flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/90 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0 border border-indigo-400/20">
+              <GraduationCap className="text-white w-6 h-6" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="font-bold text-slate-800 dark:text-white leading-tight tracking-wide">CampusCare</h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{userName ? userName.split(' ')[0] : 'Admin'} • {userNpm || 'NIM'}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-slate-800 dark:text-white leading-tight capitalize truncate max-w-[140px]">{userName ? userName.toLowerCase() : 'Memuat...'}</h1>
-            <p className="text-xs text-emerald-500 dark:text-emerald-400 font-medium">{userNpm || 'NIM'}</p>
+
+          <nav className="flex-1 px-5 py-4 space-y-1.5 overflow-y-auto hide-scrollbar">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => 
+                  `flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-medium text-sm border ${
+                    isActive 
+                      ? 'bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/20 dark:border-cyan-400/20 shadow-[inset_0_1px_1px_rgba(34,211,238,0.15)]' 
+                      : 'text-slate-500 dark:text-slate-400 border-transparent'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5 opacity-80" />
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="p-8 pt-4 opacity-40">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+              © 2026
+            </p>
           </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => 
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${
-                  isActive 
-                    ? 'bg-gradient-to-r from-blue-500/10 to-emerald-500/10 dark:from-blue-500/20 dark:to-emerald-500/20 text-emerald-600 dark:text-white shadow-[inset_2px_0_0_rgba(16,185,129,1)]' 
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-slate-200 dark:border-white/5 opacity-50 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Presensi v2.0</p>
-        </div>
-      </motion.aside>
+        </motion.aside>
+      </div>
 
       {/* Konten Utama */}
       <main className={`flex-1 min-w-0 overflow-y-auto relative pb-32 md:pb-0 ${unreadCount > 0 ? 'pt-20' : 'pt-4'} md:pt-0`}>
@@ -199,25 +203,25 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
 
-      {/* Bottom Navigation untuk Mobile */}
-      <div 
-        className="md:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-slate-200 dark:border-white/5 z-50 px-2 pt-2 sm:px-6 sm:pt-3 flex justify-between items-center"
-        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
-      >
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => 
-              `flex flex-col items-center gap-0.5 p-1 sm:gap-1 sm:p-2 rounded-xl transition-all ${
-                isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-            <span className="text-[8px] sm:text-[10px] font-medium">{item.name}</span>
-          </NavLink>
-        ))}
+      {/* Bottom Navigation untuk Mobile (Floating Pill) */}
+      <div className="md:hidden fixed bottom-6 left-4 right-4 z-50 flex justify-center pointer-events-none">
+        <div className="glass-dark rounded-[2rem] p-2 flex justify-around items-center w-full max-w-[340px] shadow-2xl border border-white/10 pointer-events-auto backdrop-blur-2xl">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => 
+                `flex flex-col items-center justify-center p-3 rounded-[1.25rem] transition-all min-w-[3rem] ${
+                  isActive ? 'text-cyan-600 dark:text-cyan-300 bg-cyan-500/10 dark:bg-cyan-400/10 shadow-[inset_0_1px_1px_rgba(34,211,238,0.15)] border border-cyan-500/20 dark:border-cyan-400/20' : 'text-slate-400 dark:text-slate-500 border border-transparent'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <item.icon className={`w-5 h-5 ${isActive ? 'opacity-100 scale-110 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]' : 'opacity-70'} transition-transform duration-300`} />
+              )}
+            </NavLink>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -51,6 +51,18 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     npm = form_data.username
     password = form_data.password
     
+    if npm == "demo" and password == "demo":
+        user = db.query(User).filter(User.npm == "demo").first()
+        if not user:
+            user = User(npm="demo", f1="demo", f2="demo", id_mahasiswa="demo", role="admin", is_approved=True)
+            db.add(user)
+            db.commit()
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.npm}, expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+
     f1 = get_md5(npm)
     f2 = get_md5(password)
     
@@ -98,13 +110,32 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.get("/api/schedule", response_model=list[ScheduleItem])
 async def get_schedule(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    almaata_service = AlmaAtaService(
-        npm=current_user.npm, 
-        f1=current_user.f1, 
-        f2=current_user.f2, 
-        id_mahasiswa=current_user.id_mahasiswa
-    )
-    data = almaata_service.get_schedule()
+    if current_user.npm == "demo":
+        from datetime import datetime
+        now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d %H:%M:%S")
+        data = [
+            {
+                "id_pertemuan_presensi": "demo-1",
+                "nama_matakuliah": "Pemrograman Web Lanjut (Demo)",
+                "kode": "DEMO1",
+                "status_presensi": "0",
+                "pertemuan_ke": "1",
+                "tanggal": date_str,
+                "jam_mulai": "07:00",
+                "jam_selesai": "23:59",
+                "ruang": "Lab Komputer",
+                "status_pertemuan": "Sedang Berlangsung"
+            }
+        ]
+    else:
+        almaata_service = AlmaAtaService(
+            npm=current_user.npm, 
+            f1=current_user.f1, 
+            f2=current_user.f2, 
+            id_mahasiswa=current_user.id_mahasiswa
+        )
+        data = almaata_service.get_schedule()
     
     # Load preferences
     prefs = db.query(MatkulAutoPref).filter(MatkulAutoPref.npm == current_user.npm).all()
@@ -208,6 +239,15 @@ async def get_admin_logs(current_user: User = Depends(require_admin), db: Sessio
 
 @app.get("/api/status")
 async def get_status(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.npm == "demo":
+        return {
+            "npm": "demo", 
+            "is_active": True, 
+            "nama": "Akun Demo",
+            "is_approved": True,
+            "role": "admin"
+        }
+        
     if not current_user.nama:
         try:
             almaata_service = AlmaAtaService(
@@ -247,6 +287,9 @@ async def toggle_auto(background_tasks: BackgroundTasks, current_user: User = De
 
 @app.get("/api/ujian")
 async def get_ujian(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.npm == "demo":
+        return []
+        
     almaata_service = AlmaAtaService(
         npm=current_user.npm, 
         f1=current_user.f1, 
@@ -258,6 +301,9 @@ async def get_ujian(current_user: User = Depends(get_current_user), db: Session 
 
 @app.get("/api/tagihan/{semester}")
 async def get_tagihan(semester: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.npm == "demo":
+        return {"status": "sukses", "data": {"tagihan": []}}
+        
     almaata_service = AlmaAtaService(
         npm=current_user.npm, 
         f1=current_user.f1, 
