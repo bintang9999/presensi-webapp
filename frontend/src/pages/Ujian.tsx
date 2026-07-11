@@ -6,15 +6,20 @@ import { id } from 'date-fns/locale';
 import api from '../api';
 
 interface UjianItem {
-  no: number;
+  no?: number;
   nama_matakuliah: string;
-  tanggal: string | null;
-  jam_awal: string | null;
-  jam_akhir: string | null;
-  ruang: string | null;
-  no_kursi: string | null;
-  nama_pengawas: string | null;
-  status: string | null;
+  tanggal?: string | null;
+  jam_awal?: string | null;
+  jam_akhir?: string | null;
+  ruang?: string | null;
+  no_kursi?: string | null;
+  nama_pengawas?: string | null;
+  status?: string | null;
+  waktu_ujian?: string | null;
+  tanggal_ujian?: string | null;
+  jenis_ujian?: string | null;
+  tipe_ujian?: string | null;
+  nama_ruang?: string | null;
 }
 
 const Ujian = () => {
@@ -101,7 +106,7 @@ const Ujian = () => {
               >
                 <div className="flex justify-between items-start mb-4">
                   <span className="text-[10px] font-bold tracking-wider px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-md uppercase border border-indigo-200 dark:border-indigo-500/20">
-                    {item.status || "TERJADWAL"}
+                    {item.status || item.tipe_ujian || "TERJADWAL"}
                   </span>
                   {item.no_kursi && (
                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -115,18 +120,18 @@ const Ujian = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
                     <CalendarDays className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
-                    <span>{item.tanggal ? format(new Date(item.tanggal), 'EEEE, dd MMM yyyy', { locale: id }) : '-'}</span>
+                    <span>{(item.tanggal || item.tanggal_ujian) ? format(new Date((item.tanggal || item.tanggal_ujian) as string), 'EEEE, dd MMM yyyy', { locale: id }) : '-'}</span>
                   </div>
                   
                   <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
                     <Clock className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                    <span>{item.jam_awal} - {item.jam_akhir}</span>
+                    <span>{item.waktu_ujian ? item.waktu_ujian : (item.jam_awal ? `${item.jam_awal} - ${item.jam_akhir}` : '-')}</span>
                   </div>
                   
-                  {item.ruang && (
+                  {(item.ruang || item.nama_ruang) && (
                     <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
                       <span className="shrink-0 text-base">📍</span>
-                      <span>{item.ruang}</span>
+                      <span>{item.ruang || item.nama_ruang}</span>
                     </div>
                   )}
                 </div>

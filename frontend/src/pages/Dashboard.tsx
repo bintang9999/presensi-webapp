@@ -43,15 +43,20 @@ interface ScheduleItem {
 }
 
 interface UjianItem {
-  no: number;
+  no?: number;
   nama_matakuliah: string;
-  tanggal: string | null;
-  jam_awal: string | null;
-  jam_akhir: string | null;
-  ruang: string | null;
-  no_kursi: string | null;
-  nama_pengawas: string | null;
-  status: string | null;
+  tanggal?: string | null;
+  jam_awal?: string | null;
+  jam_akhir?: string | null;
+  ruang?: string | null;
+  no_kursi?: string | null;
+  nama_pengawas?: string | null;
+  status?: string | null;
+  waktu_ujian?: string | null;
+  tanggal_ujian?: string | null;
+  jenis_ujian?: string | null;
+  tipe_ujian?: string | null;
+  nama_ruang?: string | null;
 }
 
 const getScheduleStatus = (item: ScheduleItem): string => {
@@ -1013,28 +1018,28 @@ const Dashboard = () => {
                       <div className="flex-1">
                         <div className="flex flex-wrap gap-2 text-xs font-semibold mb-3">
                           <span className="px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 uppercase border border-orange-200 dark:border-orange-500/30">
-                            UJIAN
+                            {item.jenis_ujian || 'UJIAN'}
                           </span>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3">{item.nama_matakuliah}</h3>
                         
                         <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500 dark:text-slate-400">
-                          {item.tanggal && (
+                          {(item.tanggal || item.tanggal_ujian) && (
                             <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                              <Calendar className="w-4 h-4 text-emerald-500" /> {item.tanggal}
+                              <Calendar className="w-4 h-4 text-emerald-500" /> {item.tanggal || item.tanggal_ujian}
                             </span>
                           )}
                           <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                            <Clock className="w-4 h-4 text-emerald-500" /> {item.jam_awal} - {item.jam_akhir}
+                            <Clock className="w-4 h-4 text-emerald-500" /> {item.waktu_ujian ? item.waktu_ujian : (item.jam_awal ? `${item.jam_awal} - ${item.jam_akhir}` : '-')}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap md:flex-nowrap items-center gap-4 w-full md:w-auto bg-slate-50 dark:bg-slate-950/50 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border md:border-none border-slate-200 dark:border-slate-800/50">
-                        {item.ruang && (
+                        {(item.ruang || item.nama_ruang) && (
                           <div className="flex flex-col">
                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Ruang</span>
-                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{item.ruang}</span>
+                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{item.ruang || item.nama_ruang}</span>
                           </div>
                         )}
                         {item.no_kursi && (
