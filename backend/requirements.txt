@@ -1,0 +1,12 @@
+fastapi[standard]
+uvicorn
+sqlalchemy
+pydantic
+pydantic-settings
+python-dotenv
+pyjwt
+requests
+beautifulsoup4
+apscheduler
+passlib[bcrypt]
+python-multipart

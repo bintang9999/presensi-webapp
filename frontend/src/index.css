@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-lg border border-slate-200/50 shadow-xl;
+  }
+  .glass-dark {
+    @apply bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-xl;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 min-h-screen antialiased transition-colors duration-300;
+}
+
+/* 🌙 PURE DARK GLASS - ULTRA TRANSPARENT (Campuscare Theme) */
+html.dark body {
+  background-color: #18181b;
+  @apply text-zinc-100;
+}
+
+/* Dark Premium Ambient Space - Lebih terang agar tembus kaca (Campuscare Style) */
+html.dark body::before {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: -2;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.35) 0%, transparent 35%),
+    radial-gradient(circle at 80% 30%, rgba(14, 165, 233, 0.25) 0%, transparent 35%),
+    radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.25) 0%, transparent 40%);
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+/* Base dark background (Campuscare Style) */
+html.dark body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background: linear-gradient(135deg, #1f1f23 0%, #24242a 50%, #18181b 100%);
+}
+
+/* Override existing slate backgrounds to EXACT Campuscare vision-card styles */
+html.dark .dark\:bg-slate-900,
+html.dark .dark\:bg-slate-900\/40,
+html.dark .dark\:bg-slate-900\/50,
+html.dark .dark\:bg-slate-800,
+html.dark .dark\:bg-slate-800\/30,
+html.dark .dark\:bg-slate-800\/50,
+html.dark .dark\:bg-blue-500\/5,
+html.dark .dark\:bg-emerald-500\/5,
+html.dark .dark\:bg-purple-500\/5,
+html.dark .glass,
+html.dark .glass-dark {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s ease-out !important;
+}
+
+/* Remove old glowing text styles */
+html.dark h1, html.dark h2, html.dark h3 {
+  text-shadow: none !important;
+}
+
+html.dark .text-emerald-400, html.dark .text-emerald-500,
+html.dark .text-blue-400, html.dark .text-blue-500,
+html.dark .text-orange-400, html.dark .text-orange-500 {
+  text-shadow: none !important;
+}
+
+/* Inputs in dark mode */
+html.dark input, 
+html.dark textarea,
+html.dark select {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark input:focus, 
+html.dark textarea:focus,
+html.dark select:focus {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  outline: none !important;
+}
